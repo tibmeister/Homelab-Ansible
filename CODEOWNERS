@@ -1,0 +1,5 @@
+# Default owner for everything
+* @tibmeister
+
+# Explicit for Ansible tree
+ansible/** @tibmeister

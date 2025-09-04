@@ -1,27 +1,40 @@
 ---
-- name: Ensure Cloudflare credentials directory exists
-ansible.builtin.file:
-path: /etc/letsencrypt
-state: directory
-mode: '0700'
+- name: Ensure certbot & Cloudflare DNS plugin present
+  ansible.builtin.package:
+    name:
+      - certbot
+      - python3-certbot-dns-cloudflare
+    state: present
 
+- name: Ensure Cloudflare API credentials file exists
+  ansible.builtin.copy:
+    dest: /root/.cloudflare.ini
+    mode: '0600'
+    content: |
+      dns_cloudflare_api_token={{ vault_cloudflare_api_token }}
 
-- name: Create Cloudflare API credentials file
-ansible.builtin.copy:
-dest: /etc/letsencrypt/cloudflare.ini
-content: |
-dns_cloudflare_api_token = {{ cloudflare_api_token }}
-owner: root
-group: root
-mode: '0600'
+- name: Obtain/renew certificate via DNS-01 (staging on first try)
+  ansible.builtin.command:
+    cmd: >
+      certbot certonly
+      --non-interactive --agree-tos
+      --email {{ letsencrypt_email }}
+      --dns-cloudflare --dns-cloudflare-credentials /root/.cloudflare.ini
+      -d {{ letsencrypt_domains | join(' -d ') }}
+      --keep-until-expiring
+  register: certbot_result
+  changed_when: "'Congratulations' in certbot_result.stdout or 'no action taken' not in certbot_result.stdout"
 
+- name: Symlink certificate for web server (example nginx path)
+  ansible.builtin.file:
+    src: "/etc/letsencrypt/live/{{ letsencrypt_domains[0] }}/fullchain.pem"
+    dest: /etc/ssl/netbox/fullchain.pem
+    state: link
+  notify: Restart nginx
 
-- name: Obtain wildcard certificate via DNS challenge
-ansible.builtin.command: >
-certbot certonly --non-interactive --agree-tos
---dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
--m {{ letsencrypt_email }}
--d {{ letsencrypt_domain }}
-args:
-creates: "{{ nginx_tls_cert }}"
-notify: Reload Nginx
+- name: Symlink private key for web server
+  ansible.builtin.file:
+    src: "/etc/letsencrypt/live/{{ letsencrypt_domains[0] }}/privkey.pem"
+    dest: /etc/ssl/netbox/privkey.pem
+    state: link
+  notify: Restart nginx

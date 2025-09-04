@@ -1,0 +1,10 @@
+# Normalize text files to LF in repo, convert to native on checkout (Windows-friendly)
+* text=auto eol=lf
+
+# Better diffs
+*.yml diff
+*.yaml diff
+*.ini diff
+*.cfg diff
+*.j2 diff
+*.md  diff

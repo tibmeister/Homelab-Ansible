@@ -1,0 +1,29 @@
+---
+extends: default
+
+# Exclude vault files (encrypted text) and Jinja templates (often not pure YAML)
+ignore: |
+  **/vault.yml
+  roles/**/templates/**
+  .git/
+  .venv/
+
+rules:
+  # ansible-lint requires these settings
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+  # Keep these from earlier
+  document-start: enable
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  line-length:
+    max: 140
+    allow-non-breakable-words: true

@@ -2,12 +2,6 @@
 # Top-level entrypoint playbook
 # Runs common baseline on all hosts, and NetBox role on netbox group
 
-- name: Apply common baseline to all hosts
-  hosts: all
-  become: true
-  roles:
-    - common
-
 - name: Deploy NetBox stack
   hosts: netbox
   become: true
