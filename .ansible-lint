@@ -3,3 +3,4 @@ profile: production
 exclude_paths:
   - roles/**/files/
   - roles/**/templates/
+  - inventories/**/group_vars/**/vault.yml
