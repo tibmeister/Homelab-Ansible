@@ -1,3 +1,4 @@
+---
 # === NetBox core ===
 netbox_version: "4.1.7"
 netbox_user: netbox

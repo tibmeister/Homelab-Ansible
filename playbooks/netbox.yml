@@ -1,15 +1,8 @@
 ---
 - name: Provision NetBox (native) on Debian 13
-hosts: netbox
-become: true
-vars_files:
-- group_vars/netbox.yml
-pre_tasks:
-- name: Ensure apt cache is up to date
-ansible.builtin.apt:
-update_cache: yes
-cache_valid_time: 3600
+  hosts: netbox
+  become: true
+  gather_facts: true
 
-
-roles:
-- netbox_native
+  roles:
+    - role: netbox_native
