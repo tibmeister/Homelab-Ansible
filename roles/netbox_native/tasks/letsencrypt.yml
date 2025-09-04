@@ -1,0 +1,27 @@
+---
+- name: Ensure Cloudflare credentials directory exists
+ansible.builtin.file:
+path: /etc/letsencrypt
+state: directory
+mode: '0700'
+
+
+- name: Create Cloudflare API credentials file
+ansible.builtin.copy:
+dest: /etc/letsencrypt/cloudflare.ini
+content: |
+dns_cloudflare_api_token = {{ cloudflare_api_token }}
+owner: root
+group: root
+mode: '0600'
+
+
+- name: Obtain wildcard certificate via DNS challenge
+ansible.builtin.command: >
+certbot certonly --non-interactive --agree-tos
+--dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
+-m {{ letsencrypt_email }}
+-d {{ letsencrypt_domain }}
+args:
+creates: "{{ nginx_tls_cert }}"
+notify: Reload Nginx

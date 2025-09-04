@@ -1,0 +1,66 @@
+# === NetBox core ===
+netbox_version: "4.1.7"
+netbox_user: netbox
+netbox_group: netbox
+netbox_base_dir: /opt/netbox
+netbox_current_dir: "{{ netbox_base_dir }}/current"
+netbox_venv: "{{ netbox_base_dir }}/venv"
+netbox_media_root: "{{ netbox_base_dir }}/media"
+netbox_reports_root: "{{ netbox_base_dir }}/reports"
+netbox_scripts_root: "{{ netbox_base_dir }}/scripts"
+netbox_secret_key_file: "{{ netbox_base_dir }}/SECRET_KEY"
+
+# Your site details
+netbox_hostname: mus-netbox-1.mus.tiberiansunhome.org
+allowed_hosts:
+  - 127.0.0.1
+  - localhost
+  - "{{ netbox_hostname }}"
+
+# === Database ===
+pg_version: 16
+pg_db: netbox
+pg_user: netbox
+pg_password: "{{ vault_pg_password }}"   # vaulted secret
+pg_host: localhost
+pg_port: 5432
+pg_encoding: UTF8
+pg_locale: en_US.UTF-8
+
+# === Redis ===
+redis_main_url: "redis://127.0.0.1:6379/0"
+redis_cache_url: "redis://127.0.0.1:6379/1"
+
+# === Nginx / TLS ===
+nginx_enable_tls: true
+nginx_listen_port: 443
+letsencrypt_email: "{{ vault_letsencrypt_email }}"
+letsencrypt_domain: "*.mus.tiberiansunhome.org"
+cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
+nginx_tls_cert: /etc/letsencrypt/live/mus.tiberiansunhome.org/fullchain.pem
+nginx_tls_key: /etc/letsencrypt/live/mus.tiberiansunhome.org/privkey.pem
+
+# === Gunicorn ===
+guni_bind: unix:{{ netbox_base_dir }}/gunicorn.sock
+guni_workers: 3
+
+# === Housekeeping ===
+housekeeping_interval_minutes: 5
+
+# === OS hardening bits (lightweight) ===
+os_packages:
+  - git
+  - curl
+  - build-essential
+  - python3-venv
+  - python3-dev
+  - libpq-dev
+  - python3-psycopg2
+  - redis-server
+  - nginx
+  - acl
+  - certbot
+  - python3-certbot-dns-cloudflare
+
+# === Firewall (optional ufw) ===
+use_ufw: false

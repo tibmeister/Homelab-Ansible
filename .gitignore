@@ -1,0 +1,49 @@
+# -----------------------------
+# OS / Editor junk
+# -----------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.retry
+
+# -----------------------------
+# Python / Virtualenv
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env/
+
+# -----------------------------
+# Ansible specifics
+# -----------------------------
+# Encrypted secrets are fine to commit, but ignore any decrypted/plaintext versions
+ansible/**/vault-plain.yml
+ansible/**/secrets.yml
+ansible/**/passwords.yml
+ansible/**/private.key
+
+# Inventory: keep hosts.ini, ignore any local/override copies
+ansible/inventories/*/hosts.local.ini
+ansible/inventories/*/group_vars/*.local.yml
+
+# Roles: ignore Galaxy-installed roles, keep custom ones
+ansible/roles/*/
+!ansible/roles/common/
+!ansible/roles/netbox_native/
+
+# Logs / artifacts
+ansible/**/*.log
+ansible/**/*.out
+
+# -----------------------------
+# IDE / Tooling
+# -----------------------------
+.vscode/
+.idea/
