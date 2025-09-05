@@ -1,0 +1,9 @@
+---
+control_station_bootstrap_user: ansible
+control_station_bootstrap_extra_packages:
+  - git
+  - python
+  - ansible
+  - ansible-lint
+  - yamllint
+  - pre-commit

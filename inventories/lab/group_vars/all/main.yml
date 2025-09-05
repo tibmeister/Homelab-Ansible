@@ -1,0 +1,12 @@
+---
+# existing mappings…
+ansible_password_hash: "{{ vault_ansible_password_hash }}"
+ansible_authorized_keys: "{{ vault_ansible_authorized_keys }}"
+
+# control-station (optional)
+control_private_key: "{{ vault_control_private_key | default('') }}"
+control_public_key: "{{ vault_control_public_key | default('') }}"
+
+# toggles
+bootstrap_disable_password_auth: false
+bootstrap_extra_packages: []

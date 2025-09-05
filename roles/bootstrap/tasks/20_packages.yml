@@ -1,0 +1,6 @@
+---
+- name: Install baseline packages (optional)
+  ansible.builtin.package:
+    name: "{{ bootstrap_extra_packages }}"
+    state: present
+  when: bootstrap_extra_packages | length > 0

@@ -1,0 +1,19 @@
+---
+- name: Ensure control user provided
+  ansible.builtin.assert:
+    that:
+      - control_station_bootstrap_user is not none
+      - control_station_bootstrap_user | length > 0
+    fail_msg: "Set 'control_station_bootstrap_user' for the control station (e.g., in host_vars/<host>.yml)."
+    quiet: true
+
+- name: Ensure control keypair present when deploying
+  ansible.builtin.assert:
+    that:
+      - control_private_key | length > 0
+      - control_public_key | length > 0
+    fail_msg: >
+      Define vault_control_private_key and vault_control_public_key in the vault,
+      or skip key deployment by leaving them undefined.
+    quiet: true
+  when: (control_private_key | default('')) or (control_public_key | default(''))

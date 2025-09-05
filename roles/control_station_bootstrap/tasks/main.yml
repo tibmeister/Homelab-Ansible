@@ -1,0 +1,12 @@
+---
+- name: Assert inputs
+  ansible.builtin.import_tasks: 05_assert.yml
+  tags: [control, assert]
+
+- name: Deploy SSH keys (optional)
+  ansible.builtin.import_tasks: 10_ssh_keys.yml
+  tags: [control, keys]
+
+- name: Install control-station packages (optional)
+  ansible.builtin.import_tasks: 20_packages.yml
+  tags: [control, packages]

@@ -1,0 +1,11 @@
+---
+# Use this only when you need to (re)provision your control node(s).
+# It can deploy your SSH keypair from Vault and optionally install baseline tools.
+
+- name: Bootstrap control station
+  hosts: control
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: control_station_bootstrap

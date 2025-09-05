@@ -1,0 +1,25 @@
+---
+# 0) Ensure Python, then gather facts
+- name: Ensure Python present and gather facts
+  ansible.builtin.import_tasks: 00_python.yml
+  tags: [bootstrap, python]
+
+# Guardrail: required vars available (from vault)
+- name: Assert required variables
+  ansible.builtin.import_tasks: 05_assert.yml
+  tags: [bootstrap, assert]
+
+# 1) Create 'ansible' user with password + keys
+- name: Configure ansible user
+  ansible.builtin.import_tasks: 10_ansible_user.yml
+  tags: [bootstrap, user]
+
+# 2) Optional baseline packages
+- name: Install baseline packages
+  ansible.builtin.import_tasks: 20_packages.yml
+  tags: [bootstrap, packages]
+
+# 3) Optional SSH hardening
+- name: Harden SSH (optional)
+  ansible.builtin.import_tasks: 30_ssh.yml
+  tags: [bootstrap, ssh]

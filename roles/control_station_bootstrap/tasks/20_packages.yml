@@ -1,0 +1,6 @@
+---
+- name: Install control-station packages (optional)
+  ansible.builtin.package:
+    name: "{{ control_station_bootstrap_extra_packages }}"
+    state: present
+  when: control_station_bootstrap_extra_packages | length > 0
