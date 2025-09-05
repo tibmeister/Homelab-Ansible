@@ -1,0 +1,7 @@
+---
+# The OS user account on the control station to receive the keypair.
+# Make this explicit per-host/group; no risky default here.
+control_station_bootstrap_user: null
+
+# Optional: install some packages (you can fill these per-OS in group_vars if you want)
+control_station_bootstrap_extra_packages: []

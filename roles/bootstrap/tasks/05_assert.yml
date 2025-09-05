@@ -1,0 +1,10 @@
+---
+- name: Ensure ansible account inputs are provided (from vault)
+  ansible.builtin.assert:
+    that:
+      - ansible_password_hash is defined
+      - (ansible_authorized_keys | default([])) | length > 0
+    fail_msg: >
+      Define 'vault_ansible_password_hash' and 'vault_ansible_authorized_keys' in
+      group_vars/all/vault.yml (and map them in group_vars/all/main.yml).
+    quiet: true

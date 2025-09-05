@@ -1,0 +1,29 @@
+---
+# Ensure Python exists before using normal modules; then collect facts.
+
+- name: Ensure Python 3 (Debian/Ubuntu)
+  ansible.builtin.raw: |
+    test -e /usr/bin/python3 || (apt-get update -y && apt-get install -y python3 sudo)
+  changed_when: false
+  failed_when: false
+
+- name: Ensure Python 3 (RHEL/CentOS/Rocky/Alma)
+  ansible.builtin.raw: |
+    test -e /usr/bin/python3 || (dnf install -y python3 sudo || yum install -y python3 sudo)
+  changed_when: false
+  failed_when: false
+
+- name: Ensure Python 3 (Alpine)
+  ansible.builtin.raw: |
+    test -e /usr/bin/python3 || (apk add --no-cache python3 sudo)
+  changed_when: false
+  failed_when: false
+
+- name: Ensure Python 3 (Arch)
+  ansible.builtin.raw: |
+    test -e /usr/bin/python3 || test -e /usr/bin/python || (pacman -Sy --noconfirm python sudo)
+  changed_when: false
+  failed_when: false
+
+- name: Gather facts (now that Python should exist)
+  ansible.builtin.setup:
