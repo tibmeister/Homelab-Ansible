@@ -1,0 +1,94 @@
+---
+# Default feature toggles and policy for the common baseline role
+common_firewall_enabled: false
+common_firewall_manage_packages: false
+common_unattended_upgrades_enabled: true
+common_manage_ssh: true
+common_manage_sysctl: true
+
+common_timezone: "America/Chicago"
+common_ntp_servers:
+  - pool.ntp.org
+
+common_base_packages:
+  - curl
+  - vim
+  - htop
+  - jq
+  - git
+  - ca-certificates
+
+# User and group policy defaults
+common_admin_group_map:
+  Debian: sudo
+  RedHat: wheel
+  Archlinux: wheel
+  Alpine: wheel
+common_admin_group_override: ""
+common_manage_admin_group: true
+common_manage_admin_sudo: true
+
+common_groups: []
+common_groups_absent: []
+common_users: []
+common_users_absent: []
+common_user_defaults:
+  state: present
+  shell: /bin/bash
+  create_home: true
+  append: true
+  system: false
+
+# Authorized keys definitions (list of {user, keys: [], exclusive: bool})
+common_authorized_keys: []
+
+# sudoers drop-ins (list of {name, content, state})
+common_sudoers: []
+
+# Optional per-OS package name overrides.
+# Example: RHEL-family uses vim-enhanced instead of vim.
+common_package_name_overrides:
+  RedHat:
+    vim: vim-enhanced
+
+# Debian-specific package preferences
+common_remove_vim_tiny: true
+common_set_editor_alternative: true
+common_editor_alternative: /usr/bin/vim.basic
+
+# SSH policy (enable/disable and algorithm lists)
+common_ssh:
+  permit_root_login: "no"
+  password_authentication: "no"
+  kex_algorithms: []
+  ciphers: []
+  macs: []
+
+# Sysctl tuning map (key: value). Empty by default.
+common_sysctl: {}
+
+# Firewall framework (no-op until common_firewall_enabled: true)
+# UFW defaults and extra rules (Debian-family)
+common_firewall_ufw_default_incoming_policy: deny
+common_firewall_ufw_default_outgoing_policy: allow
+common_firewall_rules_ufw: []
+# Example:
+# common_firewall_rules_ufw:
+#   - rule: allow
+#     name: "OpenSSH"              # optional, if allowing a named app profile
+#   - rule: allow
+#     port: 8080
+#     proto: tcp
+#     comment: "App on 8080"
+
+# firewalld defaults and extra rules (RHEL-family)
+common_firewall_zone_firewalld: public
+common_firewall_rules_firewalld: []
+# Example:
+# common_firewall_rules_firewalld:
+#   - rule: allow
+#     service: ssh                  # enables service in zone
+#   - rule: allow
+#     port: 8080
+#     proto: tcp
+#     zone: public

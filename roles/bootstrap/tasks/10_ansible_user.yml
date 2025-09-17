@@ -56,3 +56,14 @@
     state: present
     validate: 'visudo -cf %s'
   when: admin_group == 'sudo'
+
+# Provide passwordless sudo to the 'ansible' user via sudoers drop-in
+- name: Configure passwordless sudo for ansible user
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/ansible
+    content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  when: bootstrap_ansible_nopasswd | bool

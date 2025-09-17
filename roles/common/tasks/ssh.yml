@@ -1,0 +1,51 @@
+---
+# Manage core sshd_config policies from common_ssh
+
+- name: Ensure sshd_config matches policy - PermitRootLogin
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*PermitRootLogin\s+'
+    line: "PermitRootLogin {{ common_ssh.permit_root_login }}"
+    backup: true
+  notify: Reload SSH service
+
+- name: Ensure sshd_config matches policy - PasswordAuthentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*PasswordAuthentication\s+'
+    line: "PasswordAuthentication {{ common_ssh.password_authentication }}"
+    backup: true
+  notify: Reload SSH service
+
+- name: Compute SSH algorithm lists
+  ansible.builtin.set_fact:
+    _ssh_kex: "{{ (common_ssh.kex_algorithms | default([])) | join(',') }}"
+    _ssh_ciphers: "{{ (common_ssh.ciphers | default([])) | join(',') }}"
+    _ssh_macs: "{{ (common_ssh.macs | default([])) | join(',') }}"
+
+- name: Set KexAlgorithms when provided
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*KexAlgorithms\s+'
+    line: "KexAlgorithms {{ _ssh_kex }}"
+    backup: true
+  when: _ssh_kex | length > 0
+  notify: Reload SSH service
+
+- name: Set Ciphers when provided
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*Ciphers\s+'
+    line: "Ciphers {{ _ssh_ciphers }}"
+    backup: true
+  when: _ssh_ciphers | length > 0
+  notify: Reload SSH service
+
+- name: Set MACs when provided
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^\s*MACs\s+'
+    line: "MACs {{ _ssh_macs }}"
+    backup: true
+  when: _ssh_macs | length > 0
+  notify: Reload SSH service

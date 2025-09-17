@@ -85,16 +85,60 @@ mus-netservice-2
 
 ## ▶️ Running plays
 
-* All-in entrypoint (typical run):
+### Install Galaxy collections (once or when updated)
 
-  ```bash
-  ansible-playbook -i inventories/lab/hosts.ini playbooks/site.yml
-  ```
-* Target just NetBox hosts:
+```bash
+ansible-galaxy install -r collections/requirements.yml
+```
 
-  ```bash
-  ansible-playbook -i inventories/lab/hosts.ini playbooks/netbox.yml -l netbox
-  ```
+### First-time bootstrap of a new host
+
+The site entrypoint runs three plays in order: bootstrap → baseline (common) → NetBox (on `netbox` group).
+
+Use a temporary/initial login for the very first run, and prompt for vault and sudo passwords:
+
+```bash
+ansible-playbook playbooks/site.yml \
+  -i inventories/lab/hosts.ini \
+  -l <hostname> \
+  -u <bootstrap_user> \
+  --ask-pass \
+  --ask-become-pass \
+  --ask-vault-pass
+```
+
+What happens:
+- Bootstrap ensures Python/sudo, creates the `ansible` user, installs its SSH authorized_keys, and grants passwordless sudo via `/etc/sudoers.d/ansible`.
+- Baseline then reconnects as `ansible` using key-based auth (no sudo password required).
+
+Tip: If your SSH key isn’t the default, add `--private-key ~/.ssh/<key>`.
+
+### Regular baseline runs (after bootstrap)
+
+```bash
+ansible-playbook playbooks/site.yml \
+  -i inventories/lab/hosts.ini \
+  --ask-vault-pass
+```
+
+Target a subset:
+
+```bash
+ansible-playbook playbooks/site.yml -i inventories/lab/hosts.ini -l netbox --ask-vault-pass
+```
+
+Optional hardening: once you’ve confirmed key-based login works, you can disable SSH password auth by setting `bootstrap_disable_password_auth: true` in inventory and re-running.
+
+### Control station bootstrap (your Ansible host)
+
+If you need to (re)provision your control node (install Ansible tooling and/or deploy your SSH keypair from Vault):
+
+```bash
+ansible-playbook playbooks/control_station_bootstrap.yml \
+  -i inventories/lab/hosts.ini \
+  -l control \
+  --ask-vault-pass [--ask-become-pass]
+```
 
 ---
 
@@ -174,31 +218,77 @@ ansible-playbook -i /nfs/swarm/ansible/inventories/lab/hosts.ini \
 
 ---
 
-## 🧭 Legacy notes (from the original README)
+## 🧭 Bootstrap and baseline workflow
 
-These were preserved for reference and may be superseded by the role-based layout above.
+This repository uses a single entrypoint (`playbooks/site.yml`) that:
+- Bootstraps brand-new hosts (no Python, no `ansible` user yet).
+- Applies the baseline (`roles/common`) as the `ansible` user with key-based auth and passwordless sudo.
+- Optionally deploys the NetBox stack to the `netbox` group.
 
-* **Bootstrap a system**
-  *First: edit the bootstrap file and add the IP of the target*
-  *NOTE: This allows bootstrapping without the remote user having sudoers NOPASSWD configured*
+Key inventory variables to set (examples live in `inventories/lab/group_vars/all/main.yml`):
+- `ansible_password_hash: "{{ vault_ansible_password_hash }}"`
+- `ansible_authorized_keys: "{{ vault_ansible_authorized_keys }}"`
+- `bootstrap_disable_password_auth: false` (set to `true` after verifying key-based login)
 
-  ```bash
-  ansible-playbook -i bootstrap playbooks/bootstrap.yml --ask-become-pass --ask-pass
-  ```
-
-* **System baseline (all systems)**
-
-  ```bash
-  ansible-playbook playbooks/baseline.yml
-  ```
-
-* **System baseline (single host)**
-
-  ```bash
-  ansible-playbook playbooks/baseline.yml -l buntu04 --ask-become-pass
-  ```
+Secrets belong in `inventories/lab/group_vars/all/vault.yml` (edit with `ansible-vault edit ...`) and you should include `--ask-vault-pass` in your playbook runs unless you’ve set `ANSIBLE_VAULT_PASSWORD_FILE`.
 
 ---
+
+## 🔥 Firewall Baseline (optional, opt-in)
+
+The `common` role includes a firewall framework that works across Debian (UFW) and RHEL (firewalld). It is disabled by default to avoid surprises.
+
+Enable it by setting inventory vars (YAML shown; you can also set these in `hosts.ini` under `[all:vars]` or group-specific):
+
+```yaml
+# inventories/lab/group_vars/all/main.yml
+---
+# Turn on the firewall baseline
+common_firewall_enabled: true
+
+# Install firewall packages too (set true if hosts don't already have them)
+common_firewall_manage_packages: true
+```
+
+Debian (UFW) defaults and extra rules
+
+```yaml
+# Default policies (applied when enabled)
+common_firewall_ufw_default_incoming_policy: deny
+common_firewall_ufw_default_outgoing_policy: allow
+
+# Extra UFW rules (examples)
+common_firewall_rules_ufw:
+  - rule: allow
+    name: OpenSSH            # UFW app profile (keeps SSH open)
+  - rule: allow
+    port: 8080
+    proto: tcp
+    comment: "App on 8080"
+```
+
+RHEL (firewalld) zone and extra rules
+
+```yaml
+# Default zone
+common_firewall_zone_firewalld: public
+
+# Extra firewalld rules (examples)
+common_firewall_rules_firewalld:
+  - rule: allow
+    service: ssh            # enables service in the chosen zone
+  - rule: allow
+    port: 8080
+    proto: tcp
+    zone: public
+```
+
+Notes
+- Nothing runs until `common_firewall_enabled: true`.
+- Package installation only happens if `common_firewall_manage_packages: true`.
+- UFW tasks set the default incoming/outgoing policies and keep SSH allowed.
+- Firewalld tasks ensure the daemon is running (packages optional) and keep SSH allowed.
+- Collections required: `community.general` and `ansible.posix` (install via `ansible-galaxy install -r collections/requirements.yml`).
 
 ## 🛠️ Makefile shortcuts
 

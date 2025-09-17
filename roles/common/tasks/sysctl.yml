@@ -1,0 +1,33 @@
+---
+- name: Ensure sysctl drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/sysctl.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Build sysctl configuration content
+  ansible.builtin.set_fact:
+    _sysctl_lines: |
+      {% for k, v in (common_sysctl | default({})).items() %}
+      {{ k }} = {{ v }}
+      {% endfor %}
+
+- name: Write baseline sysctl config
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/90-common-baseline.conf
+    content: "{{ _sysctl_lines | default('') }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: (common_sysctl | default({})) | length > 0
+
+- name: Apply sysctl values immediately
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/90-common-baseline.conf
+    reload: true
+  loop: "{{ (common_sysctl | default({})).items() | list }}"
