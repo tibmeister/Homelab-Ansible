@@ -1,6 +1,21 @@
 ---
 # Top-level entrypoint playbook
-# Runs common baseline on all hosts, and NetBox role on netbox group
+# Runs bootstrap (optional), common baseline, then NetBox role
+
+- name: Bootstrap hosts for Ansible management
+  hosts: bootstrap
+  gather_facts: false
+  become: true
+  serial: 1
+  roles:
+    - role: bootstrap
+
+- name: Apply common baseline
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - role: common
 
 - name: Deploy NetBox stack
   hosts: netbox

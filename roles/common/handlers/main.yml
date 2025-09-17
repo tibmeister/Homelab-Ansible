@@ -1,0 +1,16 @@
+---
+
+- name: Reload SSH service
+  ansible.builtin.service:
+    name: "{{ (ansible_facts.os_family == 'Debian') | ternary('ssh', 'sshd') }}"
+    state: reloaded
+
+- name: Restart SSH service
+  ansible.builtin.service:
+    name: "{{ (ansible_facts.os_family == 'Debian') | ternary('ssh', 'sshd') }}"
+    state: restarted
+
+- name: Restart chrony service
+  ansible.builtin.service:
+    name: "{{ (ansible_facts.os_family == 'RedHat') | ternary('chronyd', 'chrony') }}"
+    state: restarted

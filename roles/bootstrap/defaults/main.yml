@@ -1,0 +1,5 @@
+---
+# No secrets here—only non-sensitive defaults
+bootstrap_disable_password_auth: false
+bootstrap_extra_packages: []
+bootstrap_ansible_nopasswd: true

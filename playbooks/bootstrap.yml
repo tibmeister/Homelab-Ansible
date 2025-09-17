@@ -1,0 +1,13 @@
+---
+# Bootstrap a brand-new host so it can be managed by Ansible.
+# Run once per new system using the *existing* bootstrap SSH user:
+#   -u <bootstrap_user> --ask-pass --ask-become-pass [-l host]
+
+- name: Bootstrap hosts for Ansible management
+  hosts: bootstrap
+  gather_facts: false          # python may not be present yet
+  become: true
+  serial: 1
+
+  roles:
+    - role: bootstrap

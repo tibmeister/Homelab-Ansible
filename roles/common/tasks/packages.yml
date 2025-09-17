@@ -1,0 +1,44 @@
+---
+- name: Refresh package cache on Debian-family
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Compute package name overrides for this OS family
+  ansible.builtin.set_fact:
+    _common_pkg_overrides: "{{ common_package_name_overrides.get(ansible_facts.os_family, {}) }}"
+
+- name: Install baseline packages
+  ansible.builtin.package:
+    name: "{{ (_common_pkg_overrides[item] | default(item)) }}"
+    state: present
+  loop: "{{ common_base_packages }}"
+  loop_control:
+    label: "{{ (_common_pkg_overrides[item] | default(item)) }}"
+
+- name: Remove vim-tiny on Debian when full vim requested
+  ansible.builtin.apt:
+    name: vim-tiny
+    state: absent
+  when:
+    - ansible_facts.os_family == 'Debian'
+    - common_remove_vim_tiny | bool
+    - "'vim' in common_base_packages"
+
+- name: Set editor alternative to vim on Debian
+  community.general.alternatives:
+    name: editor
+    path: "{{ common_editor_alternative }}"
+  when:
+    - ansible_facts.os_family == 'Debian'
+    - common_set_editor_alternative | bool
+
+- name: Set vi alternative to vim on Debian (best-effort)
+  community.general.alternatives:
+    name: vi
+    path: "{{ common_editor_alternative }}"
+  when:
+    - ansible_facts.os_family == 'Debian'
+    - common_set_editor_alternative | bool
+  failed_when: false

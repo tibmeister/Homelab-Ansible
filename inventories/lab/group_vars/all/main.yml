@@ -1,0 +1,40 @@
+---
+# existing mappings…
+ansible_password_hash: "{{ vault_ansible_password_hash }}"
+ansible_authorized_keys: "{{ vault_ansible_authorized_keys }}"
+
+# control-station (optional)
+control_private_key: "{{ vault_control_private_key | default('') }}"
+control_public_key: "{{ vault_control_public_key | default('') }}"
+
+# toggles
+bootstrap_disable_password_auth: false
+bootstrap_extra_packages: []
+
+# --- Firewall baseline (framework; disabled by default) ---
+# To enable the firewall baseline across Debian/RHEL hosts, uncomment and adjust.
+# common_firewall_enabled: true
+
+# If the target hosts do not have ufw/firewalld installed, also enable package management:
+# common_firewall_manage_packages: true
+
+# UFW (Debian-family) defaults and extra rules
+# common_firewall_ufw_default_incoming_policy: deny
+# common_firewall_ufw_default_outgoing_policy: allow
+# common_firewall_rules_ufw:
+#   - rule: allow
+#     name: OpenSSH
+#   - rule: allow
+#     port: 8080
+#     proto: tcp
+#     comment: "App on 8080"
+
+# firewalld (RHEL-family) zone and extra rules
+# common_firewall_zone_firewalld: public
+# common_firewall_rules_firewalld:
+#   - rule: allow
+#     service: ssh
+#   - rule: allow
+#     port: 8080
+#     proto: tcp
+#     zone: public

@@ -6,7 +6,7 @@ TAGS ?=
 ANSIBLE ?= ansible-playbook
 YAMLLINT ?= yamllint
 ANSIBLE_LINT ?= ansible-lint
-VAULT_FILE ?= inventories/lab/group_vars/vault.yml
+VAULT_FILE ?= inventories/lab/group_vars/all/vault.yml
 VAULT_PASS ?=
 
 # Optional vault arg if VAULT_PASS is provided
@@ -48,3 +48,6 @@ vault-view:
 
 vault-rekey:
 	ansible-vault rekey $(VAULT_FILE)
+
+galaxy:
+	ansible-galaxy collection install -r collections/requirements.yml

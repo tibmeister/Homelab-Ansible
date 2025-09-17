@@ -1,0 +1,69 @@
+---
+# Compute admin group per OS family
+- name: Compute admin group map
+  ansible.builtin.set_fact:
+    admin_group_map:
+      Debian: sudo
+      RedHat: wheel
+      Archlinux: wheel
+      Alpine: wheel
+
+- name: Set admin group for this host
+  ansible.builtin.set_fact:
+    admin_group: "{{ admin_group_map.get(ansible_facts.os_family, 'sudo') }}"
+
+- name: Ensure 'ansible' group exists
+  ansible.builtin.group:
+    name: ansible
+    state: present
+
+- name: Ensure 'ansible' user exists (add to admin group)
+  ansible.builtin.user:
+    name: ansible
+    group: ansible
+    groups: "{{ admin_group }}"
+    append: true
+    shell: /bin/bash
+    password: "{{ ansible_password_hash }}"
+    create_home: true
+    state: present
+
+- name: Install authorized_keys for 'ansible'
+  ansible.posix.authorized_key:
+    user: ansible
+    key: "{{ item }}"
+    state: present
+    manage_dir: true
+    exclusive: false
+  loop: "{{ ansible_authorized_keys }}"
+
+# Ensure sudoers enables the admin group (NOT NOPASSWD)
+- name: Ensure %wheel is permitted to sudo
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    # replace commented or active lines alike
+    regexp: '^\s*#?\s*%wheel\s+ALL=\(ALL(:ALL)?\)\s+ALL'
+    line: '%wheel ALL=(ALL:ALL) ALL'
+    state: present
+    validate: 'visudo -cf %s'
+  when: admin_group == 'wheel'
+
+- name: Ensure %sudo is permitted to sudo
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^\s*#?\s*%sudo\s+ALL=\(ALL(:ALL)?\)\s+ALL'
+    line: '%sudo ALL=(ALL:ALL) ALL'
+    state: present
+    validate: 'visudo -cf %s'
+  when: admin_group == 'sudo'
+
+# Provide passwordless sudo to the 'ansible' user via sudoers drop-in
+- name: Configure passwordless sudo for ansible user
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/ansible
+    content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  when: bootstrap_ansible_nopasswd | bool

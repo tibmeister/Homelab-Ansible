@@ -1,0 +1,25 @@
+###############################################
+# Managed by Ansible (common role)
+###############################################
+
+# NTP servers
+{% if common_ntp_servers | length > 0 %}
+{% for server in common_ntp_servers %}
+server {{ server }} iburst
+{% endfor %}
+{% else %}
+pool pool.ntp.org iburst
+{% endif %}
+
+# Allow local time sync queries (localhost only)
+allow 127.0.0.1
+allow ::1
+
+# Record the rate at which the system clock gains/losses time
+driftfile /var/lib/chrony/chrony.drift
+
+# Enable kernel RTC synchronization
+rtcsync
+
+# Step the clock on first sync if needed
+makestep 1.0 3

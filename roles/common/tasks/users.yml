@@ -1,0 +1,117 @@
+---
+- name: Determine baseline admin group
+  ansible.builtin.set_fact:
+    common_admin_group: "{{ override if override else common_admin_group_map.get(detected_os_family, 'sudo') }}"
+  vars:
+    override: "{{ common_admin_group_override | default('') | trim }}"
+    detected_os_family: "{{ ansible_facts.get('os_family', '') }}"
+
+- name: Ensure baseline admin group exists
+  ansible.builtin.group:
+    name: "{{ common_admin_group }}"
+    state: present
+  when:
+    - common_manage_admin_group
+    - (common_admin_group | default('')) | length > 0
+
+- name: Manage baseline groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    system: "{{ item.system | default(omit) }}"
+  loop: "{{ common_groups }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Remove baseline groups marked absent
+  ansible.builtin.group:
+    name: "{{ group_name }}"
+    state: absent
+    force: "{{ group_force | bool }}"
+  loop: "{{ common_groups_absent }}"
+  loop_control:
+    label: "{{ group_name }}"
+  vars:
+    group_name: "{{ item.name | default(item) }}"
+    group_force: "{{ item.force | default(false) if item is mapping else false }}"
+
+- name: Manage baseline users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default(common_user_defaults.state) }}"
+    uid: "{{ item.uid | default(omit) }}"
+    group: "{{ item.primary_group | default(item.group | default(omit)) }}"
+    groups: "{{ item.groups | default(omit) }}"
+    append: "{{ item.append | default(common_user_defaults.append) | bool }}"
+    shell: "{{ item.shell | default(common_user_defaults.shell) }}"
+    home: "{{ item.home | default(omit) }}"
+    create_home: "{{ item.create_home | default(common_user_defaults.create_home) | bool }}"
+    password: "{{ item.password | default(omit) }}"
+    comment: "{{ item.comment | default(omit) }}"
+    system: "{{ item.system | default(common_user_defaults.system) | bool }}"
+    expires: "{{ item.expires | default(omit) }}"
+    remove: "{{ item.remove | default(omit) }}"
+    password_lock: "{{ item.password_lock | default(omit) }}"
+    seuser: "{{ item.seuser | default(omit) }}"
+  loop: "{{ common_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Remove baseline users marked absent
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    state: absent
+    remove: "{{ user_remove_home | bool }}"
+  loop: "{{ common_users_absent }}"
+  loop_control:
+    label: "{{ user_name }}"
+  vars:
+    user_name: "{{ item.name | default(item) }}"
+    user_remove_home: "{{ item.remove | default(false) if item is mapping else false }}"
+
+- name: Manage authorized keys for baseline users
+  ansible.posix.authorized_key:
+    user: "{{ item.0.user }}"
+    key: "{{ item.1 }}"
+    state: present
+    manage_dir: true
+    exclusive: "{{ ((item.0.exclusive | default(false)) and key_index == 0) | bool }}"
+    path: "{{ item.0.path | default(omit) }}"
+  loop: "{{ common_authorized_keys | subelements('keys', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.0.user }}"
+    index_var: key_index
+
+- name: Ensure baseline admin group has sudo access
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: "^\\s*#?\\s*%{{ common_admin_group | regex_escape }}\\s+ALL=\\(ALL(:ALL)?\\)\\s+ALL"
+    line: "%{{ common_admin_group }} ALL=(ALL:ALL) ALL"
+    state: present
+    validate: 'visudo -cf %s'
+  when:
+    - common_manage_admin_sudo
+    - (common_admin_group | default('')) | length > 0
+
+- name: Manage sudoers drop-ins
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    content: "{{ item.content }}\n"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  loop: "{{ common_sudoers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: (item.state | default('present')) == 'present'
+
+- name: Remove sudoers drop-ins marked absent
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ item.name }}"
+    state: absent
+  loop: "{{ common_sudoers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: (item.state | default('present')) == 'absent'

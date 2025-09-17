@@ -1,0 +1,79 @@
+---
+# Debian-family: UFW baseline
+- name: Ensure ufw installed (Debian)
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  when:
+    - ansible_facts.os_family == 'Debian'
+    - common_firewall_manage_packages | bool
+
+- name: UFW default incoming policy (Debian)
+  community.general.ufw:
+    state: enabled
+    policy: "{{ common_firewall_ufw_default_incoming_policy }}"
+    direction: incoming
+  when: ansible_facts.os_family == 'Debian'
+
+- name: UFW allow outgoing (Debian)
+  community.general.ufw:
+    rule: "{{ common_firewall_ufw_default_outgoing_policy }}"
+    direction: outgoing
+  when: ansible_facts.os_family == 'Debian'
+
+- name: UFW allow SSH (Debian)
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Apply extra UFW rules (Debian)
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    name: "{{ item.name | default(omit) }}"
+    port: "{{ item.port | default(omit) }}"
+    proto: "{{ item.proto | default(omit) }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ common_firewall_rules_ufw }}"
+  loop_control:
+    label: "ufw: {{ item.name | default(item.port | default('rule')) }}"
+  when: ansible_facts.os_family == 'Debian'
+
+# RHEL-family: firewalld baseline
+- name: Ensure firewalld installed and running (RHEL)
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+  when:
+    - ansible_facts.os_family == 'RedHat'
+    - common_firewall_manage_packages | bool
+
+- name: Enable and start firewalld (RHEL)
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+  when: ansible_facts.os_family == 'RedHat'
+
+- name: Allow SSH service in firewalld (RHEL)
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: true
+    state: enabled
+    immediate: true
+  when: ansible_facts.os_family == 'RedHat'
+
+- name: Apply extra firewalld rules (RHEL)
+  ansible.posix.firewalld:
+    zone: "{{ item.zone | default(common_firewall_zone_firewalld) }}"
+    service: "{{ item.service | default(omit) }}"
+    port: "{{ (item.port | string) if (item.port is defined) else omit }}"
+    protocol: "{{ item.proto | default(omit) }}"
+    permanent: true
+    immediate: true
+    state: "{{ ((item.rule | default('allow')) in ['allow', 'enabled']) | ternary('enabled', 'disabled') }}"
+  loop: "{{ common_firewall_rules_firewalld }}"
+  loop_control:
+    label: "firewalld: {{ item.service | default(item.port | default('rule')) }}"
+  when: ansible_facts.os_family == 'RedHat'

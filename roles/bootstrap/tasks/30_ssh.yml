@@ -1,0 +1,23 @@
+---
+# SSH tightening is optional so you don't lock yourself out immediately.
+# Enable after verifying key-based login works (set bootstrap_disable_password_auth=true).
+
+- name: Disable password authentication in sshd_config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication\\s+'
+    line: 'PasswordAuthentication no'
+    create: false
+    backup: true
+  when: bootstrap_disable_password_auth | bool
+  notify: Restart SSH service
+
+- name: Ensure AuthorizedKeysFile path (usually default already)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^AuthorizedKeysFile\\s+'
+    line: 'AuthorizedKeysFile .ssh/authorized_keys'
+    create: false
+    backup: true
+  when: bootstrap_disable_password_auth | bool
+  notify: Reload SSH service
