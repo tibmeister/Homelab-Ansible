@@ -290,6 +290,26 @@ Notes
 - Firewalld tasks ensure the daemon is running (packages optional) and keep SSH allowed.
 - Collections required: `community.general` and `ansible.posix` (install via `ansible-galaxy install -r collections/requirements.yml`).
 
+---
+
+## 🪜 Bootstrap Group vs Baseline
+
+This repo intentionally keeps a dedicated `[bootstrap]` inventory group separate from the baseline.
+
+- Purpose
+  - `[bootstrap]`: Onboarding queue. Only these hosts run the first play which installs Python/sudo, creates the `ansible` user with SSH keys, and grants passwordless sudo.
+  - Baseline: Not a group. The second play targets `hosts: all` and applies the `common` role to every host, every run.
+
+- How to use
+  - Add a brand‑new host to `[bootstrap]` (and any final groups) and run the site playbook with `-u <bootstrap_user> --ask-pass --ask-become-pass --ask-vault-pass`.
+  - After it succeeds, optionally remove the host from `[bootstrap]`. It will continue to receive the baseline via `hosts: all`.
+
+- Connection expectations
+  - Bootstrap: connects with a temporary user (password auth ok) and runs `serial: 1` with facts off until Python is present.
+  - Baseline: connects as `ansible` by default (set globally in `[all:vars] ansible_user=ansible`) using key‑based auth and passwordless sudo.
+
+Keeping `[bootstrap]` separate avoids surprises and makes the onboarding flow explicit and safe.
+
 ## 🛠️ Makefile shortcuts
 
 A small Makefile at the repo root makes common tasks fast:
