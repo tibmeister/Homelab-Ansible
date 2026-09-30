@@ -1,0 +1,8 @@
+---
+# SDR Site Specifics
+site_config_gateway: 10.50.1.1
+site_config_dns_servers:
+  - 10.50.1.1
+  - 1.1.1.1
+site_config_ntp_servers:
+  - 10.50.1.1

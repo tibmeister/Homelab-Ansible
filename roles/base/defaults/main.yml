@@ -1,0 +1,22 @@
+---
+base_apt_cache_timeout: 3600
+base_sys_packages:
+  - acl
+  - curl
+  - nano
+  - apt-transport-https
+  - unattended-upgrades
+  - python3
+  - python3-pip
+  - nfs-common
+  - ntp
+  - ethtool
+  - mtr
+  - vim
+  - git
+  - net-tools
+  - iproute2
+  - vim-gtk3
+  - python3-setuptools
+  - python3-wheel
+  - build-essential

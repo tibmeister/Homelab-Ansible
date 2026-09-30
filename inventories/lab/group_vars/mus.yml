@@ -1,0 +1,7 @@
+---
+# MUS Site Specifics
+site_config_gateway: 10.27.200.254
+site_config_dns_servers:
+  - 10.27.200.1
+site_config_ntp_servers:
+  - 10.27.200.254

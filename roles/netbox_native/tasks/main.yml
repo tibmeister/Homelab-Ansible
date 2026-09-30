@@ -1,0 +1,5 @@
+---
+- name: Fail Until NetBox Implementation Exists
+  ansible.builtin.fail:
+    msg: "NetBox installation is not yet implemented. Replace roles/netbox_native with the validated implementation before deployment."
+  when: true
