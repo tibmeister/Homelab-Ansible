@@ -1,13 +1,44 @@
 ---
-# Bootstrap a brand-new host so it can be managed by Ansible.
-# Run once per new system using the *existing* bootstrap SSH user:
-#   -u <bootstrap_user> --ask-pass --ask-become-pass [-l host]
-
-- name: Bootstrap hosts for Ansible management
+- name: Bootstrap Ansible Access
   hosts: bootstrap
-  gather_facts: false          # python may not be present yet
   become: true
+  gather_facts: false
   serial: 1
+  tasks:
+    - name: Require Authorized Key
+      ansible.builtin.fail:
+        msg: "authorized_key_ssh_pub variable must be set to your public SSH key"
+      when: authorized_key_ssh_pub is not defined
 
-  roles:
-    - role: bootstrap
+    - name: Create Ansible System Group
+      ansible.builtin.group:
+        name: ansible
+        state: present
+
+    - name: Create Ansible System User
+      ansible.builtin.user:
+        name: ansible
+        group: ansible
+        shell: /bin/bash
+        create_home: true
+
+    - name: Allow Ansible User Sudo Without Password
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/90-ansible-sudo
+        content: "ansible ALL=(ALL) NOPASSWD:ALL\n"
+        mode: "0440"
+        validate: "/usr/sbin/visudo -cf %s"
+
+    - name: Setup SSH Directory
+      ansible.builtin.file:
+        path: /home/ansible/.ssh
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: "0700"
+
+    - name: Add Authorized Key For Ansible User
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        key: "{{ authorized_key_ssh_pub }}"

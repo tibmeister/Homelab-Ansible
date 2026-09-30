@@ -597,3 +597,28 @@ How did you test this? Commands, output, screenshots if relevant.
 - [ ] CI checks (ansible-lint, yamllint) pass
 - [ ] Docs updated (README/role README if applicable)
 ```
+
+
+## Production Vault Contents
+
+Each deployed environment needs an encrypted vault file at inventories/<environment>/group_vars/vault.yml. The real file is ignored by Git. Create it with ansible-vault create inventories/production/group_vars/vault.yml.
+
+The production vault should define the secret variables consumed by the inventory and roles. At minimum, review these entries before a production run:
+
+```yaml
+---
+vault_pg_password: <NetBox PostgreSQL password>
+vault_letsencrypt_email: <certificate renewal address>
+vault_cloudflare_api_token: <Cloudflare DNS-01 token>
+```
+
+If the bootstrap public key is managed through Vault rather than supplied interactively, add:
+
+```yaml
+vault_ansible_authorized_keys:
+  - ssh-ed25519 AAAA... operator-key
+```
+
+The bootstrap connection password, vault password, private SSH keys, and API tokens must never be placed in inventory, README files, command arguments, or plaintext files. Supply the bootstrap public key through a protected runtime variable and remove any temporary file immediately after use. Supply the production vault password through an interactive prompt or an external secret manager.
+
+Before applying production changes, verify that the variable names match the active roles and run a check-mode deployment against the intended host.

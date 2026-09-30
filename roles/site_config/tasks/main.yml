@@ -1,0 +1,25 @@
+---
+- name: Validate gateway configuration
+  ansible.builtin.assert:
+    that:
+      - site_config_gateway is defined
+      - site_config_gateway | length > 0
+    fail_msg: "Gateway must be defined (IP or hostname)"
+  when: site_config_gateway is defined
+
+- name: Validate DNS configuration
+  ansible.builtin.assert:
+    that:
+      - site_config_dns_servers is defined
+      - site_config_dns_servers is iterable
+      - site_config_dns_servers | length > 0
+    fail_msg: "At least one DNS server must be defined"
+  when: site_config_dns_servers is defined
+
+- name: Validate NTP configuration
+  ansible.builtin.assert:
+    that:
+      - site_config_ntp_servers is defined
+      - site_config_ntp_servers is iterable
+    fail_msg: "NTP servers list must be valid"
+  when: site_config_ntp_servers is defined

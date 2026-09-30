@@ -1,0 +1,5 @@
+---
+# Gateway, DNS, and NTP configuration variables
+site_config_gateway: ""
+site_config_dns_servers: []
+site_config_ntp_servers: []

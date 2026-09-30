@@ -1,0 +1,6 @@
+---
+- name: Reload Network
+  ansible.builtin.command: /sbin/ip -br link show
+  changed_when: false
+  listen: "Network configuration changed"
+  become: true

@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: base
+  author: ""
+  description: "Base configuration for all hosts"
+runtime_info:
+  platforms: []
+  dependencies: []

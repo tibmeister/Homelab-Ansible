@@ -24,6 +24,10 @@ venv/
 # Ansible specifics
 # -----------------------------
 # Encrypted secrets are fine to commit, but ignore any decrypted/plaintext versions
+inventories/*/group_vars/vault.yml
+inventories/*/group_vars/**/vault.yml
+!inventories/*/group_vars/vault.example.yml
+!inventories/*/group_vars/**/vault.example.yml
 ansible/**/vault-plain.yml
 ansible/**/secrets.yml
 ansible/**/passwords.yml
